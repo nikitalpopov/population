@@ -3,6 +3,7 @@ import { tileLayer, latLng, MapOptions } from 'leaflet';
 
 import * as L from 'leaflet';
 import 'leaflet.heat/dist/leaflet-heat.js';
+import 'leaflet.markercluster/dist/leaflet.markercluster.js';
 
 import { CityInfo } from './city-info';
 import { GeoDataService } from './geo-data.service';
@@ -20,7 +21,8 @@ export class AppComponent implements OnInit {
 
   private geoDataService: GeoDataService;
 
-  private citiesInfo: Array<CityInfo>;
+  private citiesInfo: Array<CityInfo> = [];
+  private points: Array<any> = [];
 
   constructor(
     geoDataService: GeoDataService
@@ -46,15 +48,45 @@ export class AppComponent implements OnInit {
   }
 
   onMapReady(map: L.Map): void {
-    this.geoDataService.getCitiesInfo().subscribe(data => {
-      this.citiesInfo = data;
-
-      const points = [];
-      data.forEach(p => points.push([...p.coordinates, p.population * .005]));
-
-      // @ts-ignore
-      const heat = L.heatLayer(points, { radius: 10 }).addTo(map);
+    const PopulationMarker = L.Marker.extend({
+      icon: L.divIcon(),
+      population: 0
     });
+
+    const markers = (L as any).markerClusterGroup({
+      iconCreateFunction: (cluster) => L.divIcon({ html: `<b>${
+        (cluster.getAllChildMarkers().map(m => m.options.population).reduce((a, b) => a + b, 0)).toLocaleString('ru')
+      }</b>` })
+    });
+    map.addLayer(markers);
+
+    let heatMapLayer;
+    const chunkSize = 500;
+
+    for (let i = 0; i < 10000; i += chunkSize) {
+      this.geoDataService.getCitiesInfo(chunkSize, i).subscribe(data => {
+        data = data.filter(d => !this.citiesInfo.find(p => p.city === d.city));
+        this.citiesInfo = this.citiesInfo.concat(data);
+
+        const points = [];
+        data.forEach(p => points.push([...p.coordinates, p.population * .002]));
+        this.points = this.points.concat(points);
+        data.forEach(p => markers.addLayer(new PopulationMarker(
+          // @ts-ignore
+          p.coordinates,
+          {
+            icon: L.divIcon({ html: `<b>${(p.population).toLocaleString('ru')}</b>` }),
+            population: p.population
+          }
+        )));
+
+        if (heatMapLayer) map.removeLayer(heatMapLayer);
+
+        // @ts-ignore
+        heatMapLayer = L.heatLayer(this.points, { radius: 10 });
+        heatMapLayer.addTo(map);
+      });
+    }
   }
 
   onMouseMove(event: L.LeafletMouseEvent): void {

@@ -9,15 +9,16 @@ import { Observable } from 'rxjs';
 export class GeoDataService {
   private httpService: HttpClient;
 
-  private numberOfCities = 10000;
+  private baseUrl = 'https://public.opendatasoft.com/api/records/1.0/search/' +
+    '?dataset=geonames-all-cities-with-a-population-1000' +
+    '&sort=population&facet=timezone&facet=country&timezone=UTC';
 
   constructor(httpService: HttpClient) {
     this.httpService = httpService;
   }
 
-  getCitiesInfo(): Observable<any> {
-    const url = 'https://public.opendatasoft.com/api/records/1.0/search/' +
-      `?dataset=geonames-all-cities-with-a-population-1000&rows=${this.numberOfCities}&sort=population&facet=timezone&facet=country&timezone=UTC`;
+  getCitiesInfo(step: number = 10000, start: number = 0): Observable<any> {
+    const url = `${this.baseUrl}&rows=${step}&start=${start}`;
 
     return this.httpService.get(url).pipe(
       map(

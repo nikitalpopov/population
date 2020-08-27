@@ -4,3 +4,16 @@ body {
   display: grid;
   margin: 0;
 }
+
+.leaflet-marker-icon {
+  width: auto !important;
+  height: auto !important;
+
+  margin-top: -9px !important;
+  margin-left: -18px !important;
+  padding: 3px;
+  line-height: 1;
+
+  border: none !important;
+  opacity: 0.8 !important;
+}
