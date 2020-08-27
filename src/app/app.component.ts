@@ -24,6 +24,7 @@ export class AppComponent implements OnInit {
   lat = 59.866;
   lng = 30.163;
 
+  isDataLoading = true;
   numberOfPoints = 10000;
   points: Array<any> = [];
 
@@ -31,7 +32,6 @@ export class AppComponent implements OnInit {
   private countryToContinentMapping;
 
   private citiesInfo: Array<CityInfo> = [];
-  private points: Array<any> = [];
 
   constructor(
     geoDataService: GeoDataService
@@ -99,6 +99,8 @@ export class AppComponent implements OnInit {
         // @ts-ignore
         heatMapLayer = L.heatLayer(this.points, { radius: 10 });
         heatMapLayer.addTo(map);
+
+        if (this.points.length === 10000) this.isDataLoading = false;
       });
     }
   }

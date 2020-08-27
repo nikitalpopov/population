@@ -2,6 +2,15 @@
   <div id="coordinates">
     <div>Lat: {{lat | number}}</div>
     <div>Lng: {{lng | number}}</div>
+    <progress
+      *ngIf="isDataLoading"
+      id="loading-progress"
+      [max]="numberOfPoints"
+      [value]="points.length">
+    </progress>
   </div>
-  <div leaflet [leafletOptions]="options" (leafletMapReady)="onMapReady($event)" (leafletMouseMove)="onMouseMove($event)"></div>
+  <div leaflet [leafletOptions]="options"
+    (leafletMapReady)="onMapReady($event)"
+    (leafletMouseMove)="onMouseMove($event)">
+  </div>
 </div>
