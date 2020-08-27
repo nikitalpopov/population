@@ -8,6 +8,11 @@ import 'leaflet.markercluster/dist/leaflet.markercluster.js';
 import { CityInfo } from './city-info';
 import { GeoDataService } from './geo-data.service';
 
+const PopulationMarker = L.Marker.extend({
+  icon: L.divIcon(),
+  population: 0
+});
+
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
@@ -16,10 +21,14 @@ import { GeoDataService } from './geo-data.service';
 export class AppComponent implements OnInit {
   options: MapOptions;
 
-  lat: number;
-  lng: number;
+  lat = 59.866;
+  lng = 30.163;
+
+  numberOfPoints = 10000;
+  points: Array<any> = [];
 
   private geoDataService: GeoDataService;
+  private countryToContinentMapping;
 
   private citiesInfo: Array<CityInfo> = [];
   private points: Array<any> = [];
@@ -38,47 +47,52 @@ export class AppComponent implements OnInit {
     }
 
     this.options = {
-      center: latLng(59.866, 30.163),
+      center: latLng(this.lat, this.lng),
       layers: [
         tileLayer(tilesUrl, { maxZoom: 18 })
       ],
       worldCopyJump: true,
       zoom: 7
     };
+
+    this.geoDataService.getCountryToContinentMapping().subscribe(data => this.countryToContinentMapping = data);
   }
 
   onMapReady(map: L.Map): void {
-    const PopulationMarker = L.Marker.extend({
-      icon: L.divIcon(),
-      population: 0
-    });
-
-    const markers = (L as any).markerClusterGroup({
-      iconCreateFunction: (cluster) => L.divIcon({ html: `<b>${
-        (cluster.getAllChildMarkers().map(m => m.options.population).reduce((a, b) => a + b, 0)).toLocaleString('ru')
-      }</b>` })
-    });
-    map.addLayer(markers);
+    const countryClusters = {};
 
     let heatMapLayer;
     const chunkSize = 500;
 
-    for (let i = 0; i < 10000; i += chunkSize) {
+    for (let i = 0; i < this.numberOfPoints; i += chunkSize) {
       this.geoDataService.getCitiesInfo(chunkSize, i).subscribe(data => {
-        data = data.filter(d => !this.citiesInfo.find(p => p.city === d.city));
         this.citiesInfo = this.citiesInfo.concat(data);
 
         const points = [];
         data.forEach(p => points.push([...p.coordinates, p.population * .002]));
         this.points = this.points.concat(points);
-        data.forEach(p => markers.addLayer(new PopulationMarker(
-          // @ts-ignore
-          p.coordinates,
-          {
-            icon: L.divIcon({ html: `<b>${(p.population).toLocaleString('ru')}</b>` }),
-            population: p.population
+
+        data.forEach(p => {
+          const clusterId = this.countryToContinentMapping[p.country] || p.country;
+
+          if (!countryClusters.hasOwnProperty(clusterId)) {
+            countryClusters[clusterId] = (L as any).markerClusterGroup({
+              iconCreateFunction: this.renderClusterIcon
+            });
+            map.addLayer(countryClusters[clusterId]);
           }
-        )));
+
+          const marker = new PopulationMarker(
+            // @ts-ignore
+            p.coordinates,
+            {
+              icon: L.divIcon({ html: `<b>${p.population.toLocaleString('ru')}</b>` }),
+              population: p.population
+            }
+          );
+          countryClusters[clusterId].addLayer(marker);
+        });
+
 
         if (heatMapLayer) map.removeLayer(heatMapLayer);
 
@@ -87,6 +101,18 @@ export class AppComponent implements OnInit {
         heatMapLayer.addTo(map);
       });
     }
+  }
+
+  private renderClusterIcon(cluster): L.DivIcon {
+    return L.divIcon({
+      html: `<b>${
+        cluster
+          .getAllChildMarkers()
+          .map(m => m.options.population)
+          .reduce((a, b) => a + b, 0)
+          .toLocaleString('ru')
+      }</b>`
+    });
   }
 
   onMouseMove(event: L.LeafletMouseEvent): void {

@@ -26,10 +26,17 @@ export class GeoDataService {
           (r: any) => ({
             coordinates: r?.fields?.coordinates,
             population: r?.fields?.population,
-            city: r?.fields?.name
+            city: r?.fields?.name,
+            country: r?.fields?.country_code
           })
         )
       )
     );
+  }
+
+  getCountryToContinentMapping(): Observable<any> {
+    const url = './assets/continent.json';
+
+    return this.httpService.get(url);
   }
 }
