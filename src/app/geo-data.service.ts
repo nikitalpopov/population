@@ -11,6 +11,7 @@ export class GeoDataService {
 
   private baseUrl = 'https://public.opendatasoft.com/api/records/1.0/search/' +
     '?dataset=geonames-all-cities-with-a-population-1000' +
+    '&exclude.feature_code=PPLX' +
     '&sort=population&facet=timezone&facet=country&timezone=UTC';
 
   constructor(httpService: HttpClient) {
