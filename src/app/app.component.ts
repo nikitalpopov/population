@@ -1,16 +1,17 @@
 import { Component, OnInit } from '@angular/core';
-import { tileLayer, latLng, MapOptions } from 'leaflet';
+import { DivIcon, LatLng, LeafletMouseEvent, Map, MapOptions, Marker, TileLayer } from 'leaflet';
 
 import * as L from 'leaflet';
-import 'leaflet.heat/dist/leaflet-heat.js';
-import 'leaflet.markercluster/dist/leaflet.markercluster.js';
+import 'leaflet.heat';
+import 'leaflet.markercluster';
 
 import { CityInfo } from './city-info';
 import { GeoDataService } from './geo-data.service';
 
-const PopulationMarker = L.Marker.extend({
-  icon: L.divIcon(),
-  population: 0
+const PopulationMarker = Marker.extend({
+  icon: new DivIcon(),
+  population: 0,
+  feature_code: null
 });
 
 @Component({
@@ -29,9 +30,11 @@ export class AppComponent implements OnInit {
   points: Array<any> = [];
 
   private geoDataService: GeoDataService;
-  private countryToContinentMapping;
+  private countryToContinentMapping: { [key: string]: string };
 
   private citiesInfo: Array<CityInfo> = [];
+
+  private enableContinentClusters = true;
 
   constructor(
     geoDataService: GeoDataService
@@ -47,9 +50,9 @@ export class AppComponent implements OnInit {
     }
 
     this.options = {
-      center: latLng(this.lat, this.lng),
+      center: new LatLng(this.lat, this.lng),
       layers: [
-        tileLayer(tilesUrl, {
+        new TileLayer(tilesUrl, {
           attribution: `<a href="https://www.openstreetmap.org/">OpenStreetMap</a>` +
             ` | <a href="https://github.com/nikitalpopov/population">Repo on 🐙</a>`,
           maxZoom: 18
@@ -62,55 +65,72 @@ export class AppComponent implements OnInit {
     this.geoDataService.getCountryToContinentMapping().subscribe(data => this.countryToContinentMapping = data);
   }
 
-  onMapReady(map: L.Map): void {
+  onMapReady(map: Map): void {
     const countryClusters = {};
+    const continentClusters = {};
 
     let heatMapLayer;
     const chunkSize = 500;
 
-    for (let i = 0; i < this.numberOfPoints; i += chunkSize) {
-      this.geoDataService.getCitiesInfo(chunkSize, i).subscribe(data => {
-        this.citiesInfo = this.citiesInfo.concat(data);
+    this.geoDataService.getCitiesInfoLocal().subscribe(data => {
+      this.isDataLoading = false;
+      this.citiesInfo = data;
 
-        const points = [];
-        data.forEach(p => points.push([...p.coordinates, p.population * .002]));
-        this.points = this.points.concat(points);
+      const points = [];
+      data.forEach(p => points.push([...p.coordinates, p.population * .002]));
+      this.points = points;
 
-        data.forEach(p => {
-          const clusterId = this.countryToContinentMapping[p.country] || p.country;
+      data.forEach(p => {
+        const countryClusterId = p.country;
 
-          if (!countryClusters.hasOwnProperty(clusterId)) {
-            countryClusters[clusterId] = (L as any).markerClusterGroup({
-              iconCreateFunction: this.renderClusterIcon
-            });
-            map.addLayer(countryClusters[clusterId]);
+        if (!countryClusters.hasOwnProperty(countryClusterId)) {
+          countryClusters[countryClusterId] = (L as any).markerClusterGroup({
+            iconCreateFunction: this.renderClusterIcon
+          });
+          if (!this.enableContinentClusters) { map.addLayer(countryClusters[countryClusterId]); }
+        }
+
+        const marker = new PopulationMarker(
+          // @ts-ignore
+          p.coordinates,
+          {
+            icon: new DivIcon({ html: `<b>${p.population.toLocaleString('ru')}</b>` }),
+            population: p.population,
+            feature_code: p.feature_code
           }
-
-          const marker = new PopulationMarker(
-            // @ts-ignore
-            p.coordinates,
-            {
-              icon: L.divIcon({ html: `<b>${p.population.toLocaleString('ru')}</b>` }),
-              population: p.population
-            }
-          );
-          countryClusters[clusterId].addLayer(marker);
-        });
-
-
-        if (heatMapLayer) { map.removeLayer(heatMapLayer); }
-
-        // @ts-ignore
-        heatMapLayer = L.heatLayer(this.points, { radius: 10 });
-        heatMapLayer.addTo(map);
-
-        if (this.points.length === 10000) { this.isDataLoading = false; }
+        );
+        countryClusters[countryClusterId].addLayer(marker);
       });
-    }
+
+      if (this.enableContinentClusters) {
+        for (const key in countryClusters) {
+          if (countryClusters[key]) {
+            const continentClusterId = this.countryToContinentMapping[key] || null;
+
+            if (continentClusterId) {
+              if (!continentClusters.hasOwnProperty(continentClusterId)) {
+                continentClusters[continentClusterId] = (L as any).markerClusterGroup({
+                  iconCreateFunction: this.renderClusterIcon
+                });
+                map.addLayer(continentClusters[continentClusterId]);
+              }
+
+              continentClusters[continentClusterId].addLayer(countryClusters[key]);
+            } else {
+              map.addLayer(countryClusters[key]);
+            }
+          }
+        }
+      }
+
+      // @ts-ignore
+      heatMapLayer = L.heatLayer(this.points, { radius: 10 });
+      heatMapLayer.addTo(map);
+    });
   }
 
-  private renderClusterIcon(cluster): L.DivIcon {
-    return L.divIcon({
+  private renderClusterIcon(cluster): DivIcon {
+    return new DivIcon({
       html: `<b>${
         cluster
           .getAllChildMarkers()
@@ -121,7 +141,7 @@ export class AppComponent implements OnInit {
     });
   }
 
-  onMouseMove(event: L.LeafletMouseEvent): void {
+  onMouseMove(event: LeafletMouseEvent): void {
     this.lat = event?.latlng?.lat;
     this.lng = event?.latlng?.lng;
   }

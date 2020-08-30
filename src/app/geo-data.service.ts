@@ -35,6 +35,12 @@ export class GeoDataService {
     );
   }
 
+  getCitiesInfoLocal(): Observable<any> {
+    const url = './assets/cities-population.min.json';
+
+    return this.httpService.get(url);
+  }
+
   getCountryToContinentMapping(): Observable<any> {
     const url = './assets/continent.json';
 
