@@ -49,7 +49,11 @@ export class AppComponent implements OnInit {
     this.options = {
       center: latLng(this.lat, this.lng),
       layers: [
-        tileLayer(tilesUrl, { maxZoom: 18 })
+        tileLayer(tilesUrl, {
+          attribution: `<a href="https://www.openstreetmap.org/">OpenStreetMap</a>` +
+            ` | <a href="https://github.com/nikitalpopov/population">Repo on 🐙</a>`,
+          maxZoom: 18
+        })
       ],
       worldCopyJump: true,
       zoom: 7
@@ -94,13 +98,13 @@ export class AppComponent implements OnInit {
         });
 
 
-        if (heatMapLayer) map.removeLayer(heatMapLayer);
+        if (heatMapLayer) { map.removeLayer(heatMapLayer); }
 
         // @ts-ignore
         heatMapLayer = L.heatLayer(this.points, { radius: 10 });
         heatMapLayer.addTo(map);
 
-        if (this.points.length === 10000) this.isDataLoading = false;
+        if (this.points.length === 10000) { this.isDataLoading = false; }
       });
     }
   }
