@@ -90,11 +90,12 @@ export class AppComponent implements OnInit {
           if (!this.enableContinentClusters) { map.addLayer(countryClusters[countryClusterId]); }
         }
 
+        const icon = p.feature_code !== 'PPLX' ? new DivIcon({ html: `<b>${p.population.toLocaleString('ru')}</b>` }) : new DivIcon();
         const marker = new PopulationMarker(
           // @ts-ignore
           p.coordinates,
           {
-            icon: new DivIcon({ html: `<b>${p.population.toLocaleString('ru')}</b>` }),
+            icon,
             population: p.population,
             feature_code: p.feature_code
           }
@@ -130,15 +131,15 @@ export class AppComponent implements OnInit {
   }
 
   private renderClusterIcon(cluster): DivIcon {
-    return new DivIcon({
-      html: `<b>${
-        cluster
-          .getAllChildMarkers()
-          .map(m => m.options.population)
-          .reduce((a, b) => a + b, 0)
-          .toLocaleString('ru')
-      }</b>`
-    });
+    const clusterPopulation = cluster
+      .getAllChildMarkers()
+      .filter(m => m.options.feature_code !== 'PPLX')
+      .map(m => m.options.population)
+      .reduce((a, b) => a + b, 0);
+
+    const html = `<b>${clusterPopulation.toLocaleString('ru')}</b>`;
+
+    return clusterPopulation ? new DivIcon({ html }) : new DivIcon();
   }
 
   onMouseMove(event: LeafletMouseEvent): void {
