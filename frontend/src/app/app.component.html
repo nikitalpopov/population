@@ -8,6 +8,7 @@
       [max]="numberOfPoints"
       [value]="points.length">
     </progress>
+    <div *ngIf="isDataLoading">data is loading...</div>
   </div>
   <div leaflet [leafletOptions]="options"
     (leafletMapReady)="onMapReady($event)"

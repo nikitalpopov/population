@@ -1,6 +1,5 @@
 import { Component, OnInit } from '@angular/core';
 import { DivIcon, LatLng, LeafletMouseEvent, Map, MapOptions, Marker, TileLayer } from 'leaflet';
-import { concat } from 'rxjs';
 
 import * as L from 'leaflet';
 import 'leaflet.heat';
@@ -28,7 +27,7 @@ export class AppComponent implements OnInit {
   lng = 30.163;
 
   isDataLoading = true;
-  numberOfPoints = 100000;
+  numberOfPoints = 140000;
   points: Array<any> = [];
 
   private geoDataService: GeoDataService;
@@ -61,7 +60,7 @@ export class AppComponent implements OnInit {
         })
       ],
       worldCopyJump: true,
-      zoom: 7
+      zoom: 5
     };
 
     this.geoDataService.getCountryToContinentMapping().subscribe(data => this.countryToContinentMapping = data);
@@ -74,8 +73,8 @@ export class AppComponent implements OnInit {
     let heatMapLayer;
     const chunkSize = 10000;
 
-    for (let i = 1; i < (this.numberOfPoints / chunkSize); i ++) {
-      this.geoDataService.getCitiesInfoFromLocalServer(chunkSize, i).subscribe(data => {
+    for (let i = 1; i <= (this.numberOfPoints / chunkSize); i++) {
+      this.geoDataService.getCitiesInfo(chunkSize, i).subscribe(data => {
         this.citiesInfo = this.citiesInfo.concat(data);
 
         const points = [];
@@ -135,9 +134,9 @@ export class AppComponent implements OnInit {
         // @ts-ignore
         heatMapLayer = L.heatLayer(this.points, { radius: 10 });
         heatMapLayer.addTo(map);
-      });
 
-      if (this.points.length === this.numberOfPoints) { this.isDataLoading = false; }
+        if (i === (this.numberOfPoints / chunkSize)) { this.isDataLoading = false; }
+      });
     }
   }
 

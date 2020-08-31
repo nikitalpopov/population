@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "run": "node index.js",
+    "start": "node index.js",
     "local": "json-server db.json",
     "test": "echo \"Error: no test specified\" && exit 1"
   },

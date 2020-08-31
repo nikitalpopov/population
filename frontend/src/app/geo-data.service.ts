@@ -14,15 +14,13 @@ export class GeoDataService {
     '&exclude.feature_code=PPLX' +
     '&sort=population&facet=timezone&facet=country&timezone=UTC';
 
-  private localUrl = 'http://localhost:3000/';
-
-  private vercelApiUrl = 'https://population-backend.vercel.app/';
+  private apiUrl = 'https://dapper-local-factory.glitch.me/';
 
   constructor(httpService: HttpClient) {
     this.httpService = httpService;
   }
 
-  getCitiesInfo(step: number = 10000, start: number = 0): Observable<any> {
+  getCitiesInfoFromOpenDataServer(step: number = 10000, start: number = 0): Observable<any> {
     const url = `${this.baseUrl}&rows=${step}&start=${start}`;
 
     return this.httpService.get(url).pipe(
@@ -39,14 +37,14 @@ export class GeoDataService {
     );
   }
 
-  getCitiesInfoFromLocalServer(step: number = 100000, start: number = 0): Observable<any> {
-    const url = `${this.localUrl}cities?_sort=population&_order=desc&_limit=${step}&_page=${start}`;
+  getCitiesInfo(step: number = 100000, start: number = 0): Observable<any> {
+    const url = `${this.apiUrl}cities?_sort=population&_order=desc&_limit=${step}&_page=${start}`;
 
     return this.httpService.get(url);
   }
 
   getCountryToContinentMapping(): Observable<any> {
-    const url = `${this.localUrl}continent`;
+    const url = `${this.apiUrl}continent`;
 
     return this.httpService.get(url);
   }
