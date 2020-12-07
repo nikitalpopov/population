@@ -1,8 +1,12 @@
+@import url('https://fonts.googleapis.com/css2?family=Source+Serif+Pro&display=swap');
+
 body {
   width: 100vw;
   height: 100vh;
   display: grid;
   margin: 0;
+
+  font-family: 'Source Serif Pro', serif;
 }
 
 .leaflet-marker-icon {

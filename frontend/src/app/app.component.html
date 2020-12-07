@@ -1,14 +1,21 @@
 <div class="container">
-  <div id="coordinates">
-    <div>Lat: {{lat | number}}</div>
-    <div>Lng: {{lng | number}}</div>
+  <div
+    *ngIf="isDataLoading"
+    id="loading-progress"
+    class="map-overlay">
     <progress
-      *ngIf="isDataLoading"
-      id="loading-progress"
       [max]="numberOfPoints"
       [value]="points.length">
     </progress>
-    <div *ngIf="isDataLoading">data is loading...</div>
+    <div>data is loading...</div>
+  </div>
+  <div id="legend" class="map-overlay">
+    <div>Lat: {{lat | number}}</div>
+    <div>Lng: {{lng | number}}</div>
+    <span>
+      <div class="leaflet-marker-icon leaflet-div-icon leaflet-container"><strong>1234</strong></div>
+       – population in selected area
+    </span>
   </div>
   <div leaflet [leafletOptions]="options"
     (leafletMapReady)="onMapReady($event)"
