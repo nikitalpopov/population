@@ -86,7 +86,7 @@ export class AppComponent implements OnInit {
       .subscribe(countryToContinentMapping => {
         this.countryToContinentMapping = countryToContinentMapping;
 
-        from(Array.from(Array(this.numberOfPoints / chunkSize).keys()))
+        from([...Array(this.numberOfPoints / chunkSize).keys()].map(i => ++i))
           .pipe(concatMap(i => this.geoDataService.getCitiesInfo(chunkSize, i)))
           .subscribe(citiesInfo => {
               this.processCitiesInfo(citiesInfo, map, countryClusters, continentClusters);
