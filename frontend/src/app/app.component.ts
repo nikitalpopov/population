@@ -79,14 +79,14 @@ export class AppComponent implements OnInit {
     const continentClusters = {};
 
     let heatMapLayer;
-    const chunkSize = 2000;
+    const chunkSize = 1000;
 
     this.geoDataService
       .getCountryToContinentMapping()
       .subscribe(countryToContinentMapping => {
         this.countryToContinentMapping = countryToContinentMapping;
 
-        from([...Array(this.numberOfPoints / chunkSize)])
+        from(Array.from(Array(this.numberOfPoints / chunkSize).keys()))
           .pipe(concatMap(i => this.geoDataService.getCitiesInfo(chunkSize, i)))
           .subscribe(citiesInfo => {
               this.processCitiesInfo(citiesInfo, map, countryClusters, continentClusters);
