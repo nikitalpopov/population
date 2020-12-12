@@ -33,7 +33,7 @@ export class WorldMapComponent implements OnInit {
   lng = 30.163;
 
   isDataLoading = true;
-  numberOfPoints = 140000;
+  numberOfPoints = 100000;
   points: Array<any> = [];
 
   private geoDataService: GeoDataService;
@@ -75,7 +75,7 @@ export class WorldMapComponent implements OnInit {
     const continentClusters = {};
 
     let heatMapLayer: Layer;
-    const chunkSize = 1000;
+    const chunkSize = 5000;
 
     this.geoDataService
       .getCountryToContinentMapping()
