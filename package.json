@@ -3,8 +3,8 @@
   "version": "0.0.0",
   "scripts": {
     "ng": "ng",
-    "start": "ng serve",
-    "local": "ng build && babel-node index.js",
+    "start": "ng build && babel-node index.js",
+    "serve": "ng serve",
     "build": "ng build",
     "test": "jest",
     "test:watch": "jest --watch",
