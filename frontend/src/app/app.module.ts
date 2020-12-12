@@ -4,10 +4,12 @@ import { BrowserModule } from '@angular/platform-browser';
 import { LeafletModule } from '@asymmetrik/ngx-leaflet';
 
 import { AppComponent } from './app.component';
+import { WorldMapComponent } from './components/world-map/world-map.component';
 
 @NgModule({
   declarations: [
-    AppComponent
+    AppComponent,
+    WorldMapComponent
   ],
   imports: [
     BrowserModule,
