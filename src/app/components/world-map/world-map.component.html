@@ -11,5 +11,9 @@
     – population in selected area
   </span>
 </div>
-<div leaflet [leafletOptions]="options" (leafletMapReady)="onMapReady($event)" (leafletMouseMove)="onMouseMove($event)">
+<div leaflet
+  [leafletOptions]="options"
+  (leafletMapReady)="onMapReady($event)"
+  (leafletMouseMove)="onMouseMove($event)"
+  (leafletMapZoomEnd)="onMapZoomEnd($event)">
 </div>

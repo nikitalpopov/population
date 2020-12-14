@@ -1,7 +1,10 @@
 import { HttpClient } from '@angular/common/http';
+import { StringMap } from '@angular/compiler/src/compiler_facade_interface';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/internal/operators';
+
+import { CityInfo } from '@models/city-info';
 
 @Injectable({
   providedIn: 'root'
@@ -18,7 +21,7 @@ export class GeoDataService {
     this.httpService = httpService;
   }
 
-  getCitiesInfoFromOpenDataServer(step: number = 10000, start: number = 0): Observable<any> {
+  getCitiesInfoFromOpenDataServer(step: number = 10000, start: number = 0): Observable<Array<CityInfo>> {
     const url = `${this.baseUrl}&rows=${step}&start=${start}`;
 
     return this.httpService.get(url).pipe(
@@ -35,15 +38,15 @@ export class GeoDataService {
     );
   }
 
-  getCitiesInfo(step: number = 100000, start: number = 0): Observable<any> {
+  getCitiesInfo(step: number = 100000, start: number = 0): Observable<Array<CityInfo>> {
     const url = `/cities?_sort=population&_order=desc&_limit=${step}&_page=${start}`;
 
-    return this.httpService.get(url);
+    return this.httpService.get<Array<CityInfo>>(url);
   }
 
-  getCountryToContinentMapping(): Observable<any> {
+  getCountryToContinentMapping(): Observable<StringMap> {
     const url = `/continent`;
 
-    return this.httpService.get(url);
+    return this.httpService.get<StringMap>(url);
   }
 }

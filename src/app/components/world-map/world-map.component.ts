@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { StringMap } from '@angular/compiler/src/compiler_facade_interface';
 import {
   DivIcon,
   LatLng,
@@ -16,10 +17,9 @@ import * as L from 'leaflet';
 import 'leaflet.heat';
 import 'leaflet.markercluster';
 
-import { CityInfo } from '../../models/city-info';
-import { PopulationMarker } from '../../models/population-marker';
-import { StringMapping } from '../../models/string-mapping';
-import { GeoDataService } from '../../services/geo-data.service';
+import { CityInfo } from '@models/city-info';
+import { PopulationMarker } from '@models/population-marker';
+import { GeoDataService } from '@services/geo-data.service';
 
 @Component({
   selector: 'app-world-map',
@@ -36,18 +36,23 @@ export class WorldMapComponent implements OnInit {
   numberOfPoints = 100000;
   points: Array<any> = [];
 
-  private geoDataService: GeoDataService;
-  private countryToContinentMapping: StringMapping;
+  private map: Map;
+
+  private countriesZoomLevel = 5;
+  private initialZoomLevel = 5;
+
+  private countryToContinentMapping: StringMap;
 
   private citiesInfo: Array<CityInfo> = [];
 
-  private enableContinentClusters = true;
+  private countries: { [key: string]: L.MarkerClusterGroup } = {};
+  private continents: { [key: string]: L.MarkerClusterGroup } = {};
+  private countriesCluster = new L.FeatureGroup();
+  private continentsCluster = new L.FeatureGroup();
 
   constructor(
-    geoDataService: GeoDataService
-  ) {
-    this.geoDataService = geoDataService;
-  }
+    private geoDataService: GeoDataService
+  ) { }
 
   ngOnInit(): void {
     let tilesUrl = `https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png`; // OpenStreetMaps tiles
@@ -66,40 +71,65 @@ export class WorldMapComponent implements OnInit {
         })
       ],
       worldCopyJump: true,
-      zoom: 5
+      zoom: this.initialZoomLevel
     };
   }
 
+  onMouseMove(event: LeafletMouseEvent): void {
+    this.lat = event?.latlng?.lat;
+    this.lng = event?.latlng?.lng;
+  }
+
+  onMapZoomEnd(event: LeafletEvent): void {
+    this.showCorrectClusters(event.target.getZoom());
+  }
+
   onMapReady(map: Map): void {
-    const countryClusters = {};
-    const continentClusters = {};
+    this.map = map;
+
+    this.map.addLayer(this.countriesCluster);
+    this.map.addLayer(this.continentsCluster);
 
     let heatMapLayer: Layer;
     const chunkSize = 5000;
 
     this.geoDataService
       .getCountryToContinentMapping()
-      .subscribe(countryToContinentMapping => {
-        this.countryToContinentMapping = countryToContinentMapping;
+      .subscribe(
+        countryToContinentMapping => {
+          this.countryToContinentMapping = countryToContinentMapping;
 
-        from([...Array(this.numberOfPoints / chunkSize).keys()].map(i => i + 1))
-          .pipe(concatMap(i => this.geoDataService.getCitiesInfo(chunkSize, i)))
-          .subscribe(citiesInfo => {
-            this.processCitiesInfo(citiesInfo, map, countryClusters, continentClusters);
+          from([...Array(this.numberOfPoints / chunkSize).keys()].map(i => i + 1))
+            .pipe(concatMap(i => this.geoDataService.getCitiesInfo(chunkSize, i)))
+            .subscribe(citiesInfo => {
+              this.processCitiesInfo(citiesInfo);
 
-            if (heatMapLayer) { map.removeLayer(heatMapLayer); }
+              if (heatMapLayer) { map.removeLayer(heatMapLayer); }
 
-            // @ts-ignore
-            heatMapLayer = L.heatLayer(this.points, { radius: 10 });
-            heatMapLayer.addTo(map);
-          },
+              // @ts-ignore
+              heatMapLayer = L.heatLayer(this.points, { radius: 10 });
+              heatMapLayer.addTo(map);
+              this.showCorrectClusters(map.getZoom());
+            },
             () => { this.isDataLoading = false; },
             () => { this.isDataLoading = false; }
           );
-      });
+        }
+      );
   }
 
-  private processCitiesInfo(citiesInfo: any, map: Map, countryClusters: any, continentClusters: any): void {
+  private showCorrectClusters(zoomLevel: number): void {
+    this.continentsCluster.clearLayers();
+    this.countriesCluster.clearLayers();
+
+    if (zoomLevel < this.countriesZoomLevel) {
+      Object.values(this.continents).forEach(i => this.continentsCluster.addLayer(i));
+    } else {
+      Object.values(this.countries).forEach(i => this.countriesCluster.addLayer(i));
+    }
+  }
+
+  private processCitiesInfo(citiesInfo: any): void {
     this.citiesInfo = this.citiesInfo.concat(citiesInfo);
 
     const points = [];
@@ -110,19 +140,25 @@ export class WorldMapComponent implements OnInit {
       if (!p.population) { return; }
 
       const countryClusterId = p.country;
-
-      if (!countryClusters.hasOwnProperty(countryClusterId)) {
-        countryClusters[countryClusterId] = L.markerClusterGroup({
+      if (!this.countries.hasOwnProperty(countryClusterId)) {
+        this.countries[countryClusterId] = L.markerClusterGroup({
           iconCreateFunction: this.renderClusterIcon,
+          maxClusterRadius: 120,
           // @ts-ignore
           cluster_type: 'country',
           cluster_id: countryClusterId
         });
-        countryClusters[countryClusterId].on('animationend', (event: LeafletEvent) => {
-          // Object.values(event.target._featureGroup._layers).length === 1
-          // when all child markers are clustered
+      }
+
+      const continentClusterId = this.countryToContinentMapping[countryClusterId] || countryClusterId;
+      if (!this.continents.hasOwnProperty(continentClusterId)) {
+        this.continents[continentClusterId] = L.markerClusterGroup({
+          iconCreateFunction: this.renderClusterIcon,
+          maxClusterRadius: 120,
+          // @ts-ignore
+          cluster_type: 'continent',
+          cluster_id: continentClusterId
         });
-        if (!this.enableContinentClusters) { map.addLayer(countryClusters[countryClusterId]); }
       }
 
       const icon = p.feature_code !== 'PPLX' ?
@@ -137,35 +173,10 @@ export class WorldMapComponent implements OnInit {
           feature_code: p.feature_code
         }
       );
-      countryClusters[countryClusterId].addLayer(marker);
+
+      this.countries[countryClusterId].addLayer(marker);
+      this.continents[continentClusterId].addLayer(marker);
     });
-
-    if (this.enableContinentClusters) {
-      for (const key in countryClusters) {
-        if (countryClusters[key]) {
-          const continentClusterId = this.countryToContinentMapping[key] || null;
-
-          if (continentClusterId) {
-            if (!continentClusters.hasOwnProperty(continentClusterId)) {
-              continentClusters[continentClusterId] = L.markerClusterGroup({
-                iconCreateFunction: this.renderClusterIcon,
-                // @ts-ignore
-                cluster_type: 'continent'
-              });
-              continentClusters[continentClusterId].on('animationend', (event: LeafletEvent) => {
-                // enable clustering only for countryClusters where
-                // Object.values(event.target._featureGroup._layers).length === 1;
-              });
-              map.addLayer(continentClusters[continentClusterId]);
-            }
-
-            continentClusters[continentClusterId].addLayer(countryClusters[key]);
-          } else {
-            map.addLayer(countryClusters[key]);
-          }
-        }
-      }
-    }
   }
 
   private renderClusterIcon(cluster: any): DivIcon {
@@ -178,10 +189,5 @@ export class WorldMapComponent implements OnInit {
     const html = `<b>${clusterPopulation.toLocaleString('ru')}</b>`;
 
     return clusterPopulation ? new DivIcon({ html }) : new DivIcon();
-  }
-
-  onMouseMove(event: LeafletMouseEvent): void {
-    this.lat = event?.latlng?.lat;
-    this.lng = event?.latlng?.lng;
   }
 }

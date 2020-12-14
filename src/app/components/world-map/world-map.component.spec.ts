@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { WorldMapComponent } from './world-map.component';
+import { WorldMapComponent } from '@components/world-map/world-map.component';
 
 describe('WorldMapComponent', () => {
   let component: WorldMapComponent;
