@@ -38,6 +38,7 @@ export class WorldMapComponent implements OnInit {
 
   private map: Map;
 
+  private regionsZoomLevel = 8;
   private countriesZoomLevel = 5;
   private initialZoomLevel = 5;
 
@@ -45,8 +46,10 @@ export class WorldMapComponent implements OnInit {
 
   private citiesInfo: Array<CityInfo> = [];
 
+  private regions: { [key: string]: L.MarkerClusterGroup } = {};
   private countries: { [key: string]: L.MarkerClusterGroup } = {};
   private continents: { [key: string]: L.MarkerClusterGroup } = {};
+  private regionsCluster = new L.FeatureGroup();
   private countriesCluster = new L.FeatureGroup();
   private continentsCluster = new L.FeatureGroup();
 
@@ -87,11 +90,12 @@ export class WorldMapComponent implements OnInit {
   onMapReady(map: Map): void {
     this.map = map;
 
+    this.map.addLayer(this.regionsCluster);
     this.map.addLayer(this.countriesCluster);
     this.map.addLayer(this.continentsCluster);
 
     let heatMapLayer: Layer;
-    const chunkSize = 5000;
+    const chunkSize = 20000;
 
     this.geoDataService
       .getCountryToContinentMapping()
@@ -119,13 +123,22 @@ export class WorldMapComponent implements OnInit {
   }
 
   private showCorrectClusters(zoomLevel: number): void {
-    this.continentsCluster.clearLayers();
+    this.regionsCluster.clearLayers();
     this.countriesCluster.clearLayers();
+    this.continentsCluster.clearLayers();
 
-    if (zoomLevel < this.countriesZoomLevel) {
-      Object.values(this.continents).forEach(i => this.continentsCluster.addLayer(i));
-    } else {
-      Object.values(this.countries).forEach(i => this.countriesCluster.addLayer(i));
+    switch (true) {
+      case zoomLevel < this.countriesZoomLevel:
+        Object.values(this.continents).forEach(i => this.continentsCluster.addLayer(i));
+        break;
+
+      case zoomLevel < this.regionsZoomLevel:
+        Object.values(this.countries).forEach(i => this.countriesCluster.addLayer(i));
+        break;
+
+      default:
+        Object.values(this.regions).forEach(i => this.regionsCluster.addLayer(i));
+        break;
     }
   }
 
@@ -141,6 +154,13 @@ export class WorldMapComponent implements OnInit {
 
       const countryClusterId = p.country;
       if (!this.countries.hasOwnProperty(countryClusterId)) {
+        this.regions[countryClusterId] = L.markerClusterGroup({
+          iconCreateFunction: this.renderClusterIcon,
+          // @ts-ignore
+          cluster_type: 'country',
+          cluster_id: countryClusterId
+        });
+
         this.countries[countryClusterId] = L.markerClusterGroup({
           iconCreateFunction: this.renderClusterIcon,
           maxClusterRadius: 120,
@@ -174,6 +194,7 @@ export class WorldMapComponent implements OnInit {
         }
       );
 
+      this.regions[countryClusterId].addLayer(marker);
       this.countries[countryClusterId].addLayer(marker);
       this.continents[continentClusterId].addLayer(marker);
     });
