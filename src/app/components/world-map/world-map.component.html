@@ -14,6 +14,7 @@
 <div leaflet
   [leafletOptions]="options"
   (leafletMapReady)="onMapReady($event)"
-  (leafletMouseMove)="onMouseMove($event)"
-  (leafletMapZoomEnd)="onMapZoomEnd($event)">
+  (leafletMapMoveEnd)="onMapMoveEnd($event)"
+  (leafletMapZoomEnd)="onMapZoomEnd($event)"
+  (leafletMouseMove)="onMouseMove($event)">
 </div>

@@ -20,4 +20,4 @@ import { WorldMapComponent } from '@components/world-map/world-map.component';
   providers: [],
   bootstrap: [AppComponent]
 })
-export class AppModule { }
+export class AppModule {}

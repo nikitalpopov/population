@@ -21,6 +21,10 @@ import { CityInfo } from '@models/city-info';
 import { PopulationMarker } from '@models/population-marker';
 import { GeoDataService } from '@services/geo-data.service';
 
+interface ClusterMap {
+  [key: string]: L.MarkerClusterGroup;
+}
+
 @Component({
   selector: 'app-world-map',
   templateUrl: './world-map.component.html',
@@ -46,22 +50,31 @@ export class WorldMapComponent implements OnInit {
 
   private citiesInfo: Array<CityInfo> = [];
 
-  private regions: { [key: string]: L.MarkerClusterGroup } = {};
-  private countries: { [key: string]: L.MarkerClusterGroup } = {};
-  private continents: { [key: string]: L.MarkerClusterGroup } = {};
+  private regions: ClusterMap = {};
+  private countries: ClusterMap = {};
+  private continents: ClusterMap = {};
   private regionsCluster = new L.FeatureGroup();
   private countriesCluster = new L.FeatureGroup();
   private continentsCluster = new L.FeatureGroup();
 
   constructor(
     private geoDataService: GeoDataService
-  ) { }
+  ) {
+    if (window.navigator.geolocation) {
+      window.navigator.geolocation.getCurrentPosition(position => {
+        this.lat = position.coords.latitude;
+        this.lng = position.coords.longitude;
+      });
+    }
+  }
 
   ngOnInit(): void {
-    let tilesUrl = `https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png`; // OpenStreetMaps tiles
+    // OpenStreetMaps tiles
+    let tilesUrl = `https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png`;
 
     if (window.devicePixelRatio > 1) {
-      tilesUrl = `https://tile.osmand.net/hd/{z}/{x}/{y}.png`; // High res OpenStreetMaps tiles from OSMAnd
+      // High res OpenStreetMaps tiles from OSMAnd
+      tilesUrl = `https://tile.osmand.net/hd/{z}/{x}/{y}.png`;
     }
 
     this.options = {
@@ -87,6 +100,18 @@ export class WorldMapComponent implements OnInit {
     this.showCorrectClusters(event.target.getZoom());
   }
 
+  onMapMoveEnd(event: LeafletEvent): void {
+    if (this.map.getCenter().lat < -80) {
+      this.map.flyTo({ lat: -80, lng: this.map.getCenter().lng });
+    }
+
+    if (this.map.getCenter().lat > 80) {
+      this.map.flyTo({ lat: 80, lng: this.map.getCenter().lng });
+    }
+
+    this.showCorrectClusters(event.target.getZoom());
+  }
+
   onMapReady(map: Map): void {
     this.map = map;
 
@@ -105,19 +130,20 @@ export class WorldMapComponent implements OnInit {
 
           from([...Array(this.numberOfPoints / chunkSize).keys()].map(i => i + 1))
             .pipe(concatMap(i => this.geoDataService.getCitiesInfo(chunkSize, i)))
-            .subscribe(citiesInfo => {
-              this.processCitiesInfo(citiesInfo);
+            .subscribe(
+              citiesInfo => {
+                this.processCitiesInfo(citiesInfo);
 
-              if (heatMapLayer) { map.removeLayer(heatMapLayer); }
+                if (heatMapLayer) { map.removeLayer(heatMapLayer); }
 
-              // @ts-ignore
-              heatMapLayer = L.heatLayer(this.points, { radius: 10 });
-              heatMapLayer.addTo(map);
-              this.showCorrectClusters(map.getZoom());
-            },
-            () => { this.isDataLoading = false; },
-            () => { this.isDataLoading = false; }
-          );
+                // @ts-ignore
+                heatMapLayer = L.heatLayer(this.points, { radius: 10 });
+                heatMapLayer.addTo(map);
+                this.showCorrectClusters(map.getZoom());
+              },
+              () => { this.isDataLoading = false; },
+              () => { this.isDataLoading = false; }
+            );
         }
       );
   }
@@ -129,16 +155,22 @@ export class WorldMapComponent implements OnInit {
 
     switch (true) {
       case zoomLevel < this.countriesZoomLevel:
-        Object.values(this.continents).forEach(i => this.continentsCluster.addLayer(i));
+        Object.values(this.continents).forEach(i => this.addMarkersToContainer(i, this.continentsCluster));
         break;
 
       case zoomLevel < this.regionsZoomLevel:
-        Object.values(this.countries).forEach(i => this.countriesCluster.addLayer(i));
+        Object.values(this.countries).forEach(i => this.addMarkersToContainer(i, this.countriesCluster));
         break;
 
       default:
-        Object.values(this.regions).forEach(i => this.regionsCluster.addLayer(i));
+        Object.values(this.regions).forEach(i => this.addMarkersToContainer(i, this.regionsCluster));
         break;
+    }
+  }
+
+  private addMarkersToContainer(marker: L.MarkerClusterGroup, container: L.FeatureGroup): void {
+    if (this.map.getBounds().intersects(marker.getBounds())) {
+      container.addLayer(marker);
     }
   }
 
@@ -209,6 +241,6 @@ export class WorldMapComponent implements OnInit {
 
     const html = `<b>${clusterPopulation.toLocaleString('ru')}</b>`;
 
-    return clusterPopulation ? new DivIcon({ html }) : new DivIcon();
+    return new DivIcon(clusterPopulation ? { html } : undefined);
   }
 }
