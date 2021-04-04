@@ -74,13 +74,20 @@
     "setupFilesAfterEnv": [
       "<rootDir>/setup-jest.ts"
     ],
+    "moduleNameMapper": {
+      "@app/(.*)": "<rootDir>/src/app/$1",
+      "@components/(.*)": "<rootDir>/src/app/components/$1",
+      "@models/(.*)": "<rootDir>/src/app/models/$1",
+      "@services/(.*)": "<rootDir>/src/app/services/$1"
+    },
+    "moduleDirectories": ["node_modules", "src"],
     "testPathIgnorePatterns": [
       "<rootDir>/node_modules/",
       "<rootDir>/dist/"
     ],
     "globals": {
       "ts-jest": {
-        "tsConfig": "<rootDir>/tsconfig.spec.json",
+        "tsconfig": "<rootDir>/tsconfig.spec.json",
         "stringifyContentPathRegex": "\\.html$"
       }
     }

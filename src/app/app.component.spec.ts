@@ -1,13 +1,17 @@
 import { TestBed, waitForAsync } from '@angular/core/testing';
+import { LeafletModule } from '@asymmetrik/ngx-leaflet';
 
 import { AppComponent } from '@app/app.component';
+import { WorldMapComponent } from '@components/world-map/world-map.component';
 
 describe('AppComponent', () => {
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
       declarations: [
-        AppComponent
+        AppComponent,
+        WorldMapComponent
       ],
+      imports: [LeafletModule]
     }).compileComponents();
   }));
 
@@ -15,18 +19,5 @@ describe('AppComponent', () => {
     const fixture = TestBed.createComponent(AppComponent);
     const app = fixture.componentInstance;
     expect(app).toBeTruthy();
-  });
-
-  it(`should have as title 'population'`, () => {
-    const fixture = TestBed.createComponent(AppComponent);
-    const app = fixture.componentInstance;
-    expect(app.title).toEqual('population');
-  });
-
-  it('should render title', () => {
-    const fixture = TestBed.createComponent(AppComponent);
-    fixture.detectChanges();
-    const compiled = fixture.nativeElement;
-    expect(compiled.querySelector('.content span').textContent).toContain('population app is running!');
   });
 });
