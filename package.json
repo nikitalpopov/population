@@ -3,10 +3,10 @@
   "version": "0.0.0",
   "scripts": {
     "ng": "ng",
-    "prestart": "ng build --prod",
+    "prestart": "ng build --prod --build-optimizer",
     "start": "nodemon babel-node index.js",
     "serve": "ng serve",
-    "build": "ng build",
+    "build": "ng build --prod --build-optimizer",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
