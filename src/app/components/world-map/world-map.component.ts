@@ -28,8 +28,7 @@ import { GeoDataService } from '@services/geo-data.service';
 export class WorldMapComponent implements OnInit {
   options: MapOptions;
 
-  lat = 59.866;
-  lng = 30.163;
+  defaultLocation: LatLng = L.latLng(59.866, 30.163);
 
   isDataLoading = true;
   numberOfPoints = 100000;
@@ -40,7 +39,7 @@ export class WorldMapComponent implements OnInit {
 
   private regionsZoomLevel = 8;
   private countriesZoomLevel = 5;
-  private initialZoomLevel = 5;
+  private initialZoomLevel = 8;
 
   private countryToContinentMapping: StringMap;
 
@@ -59,8 +58,8 @@ export class WorldMapComponent implements OnInit {
   ) {
     if (window.navigator.geolocation) {
       window.navigator.geolocation.getCurrentPosition(position => {
-        this.lat = position.coords.latitude;
-        this.lng = position.coords.longitude;
+        this.defaultLocation = L.latLng(position.coords.latitude, position.coords.longitude);
+        if (this.map) { this.flyToSelectedLocation(); }
       });
     }
   }
@@ -75,7 +74,7 @@ export class WorldMapComponent implements OnInit {
     }
 
     this.options = {
-      center: new LatLng(this.lat, this.lng),
+      center: this.defaultLocation,
       layers: [
         new TileLayer(tilesUrl, {
           attribution: `<a href="https://www.openstreetmap.org/">OpenStreetMap</a>` +
@@ -88,21 +87,14 @@ export class WorldMapComponent implements OnInit {
     };
 
     this.geoDataService.countryToContinentMapping$.subscribe(
-      countryToContinentMapping =>
-        this.countryToContinentMapping = countryToContinentMapping
+      countryToContinentMapping => (this.countryToContinentMapping = countryToContinentMapping)
     );
 
     this.geoDataService.getCountryToContinentMapping();
-
-    this.geoDataService.citiesInfo$.subscribe(
-      this.handleCitiesInfo.bind(this),
-      () => { this.isDataLoading = false; }
-    );
   }
 
   onMouseMove(event: LeafletMouseEvent): void {
-    this.lat = event?.latlng?.lat;
-    this.lng = event?.latlng?.lng;
+    this.defaultLocation = event?.latlng;
   }
 
   onMapZoomEnd(event: LeafletEvent): void {
@@ -110,6 +102,8 @@ export class WorldMapComponent implements OnInit {
   }
 
   onMapMoveEnd(event: LeafletEvent): void {
+    if (!this.map) { return; }
+
     if (this.map.getCenter().lat < -80) {
       this.map.flyTo({ lat: -80, lng: this.map.getCenter().lng });
     }
@@ -129,10 +123,21 @@ export class WorldMapComponent implements OnInit {
     this.map.addLayer(this.continentsCluster);
 
     this.geoDataService.getCitiesInfo();
+
+    this.geoDataService.citiesInfo$.subscribe(
+      this.handleCitiesInfo.bind(this)
+    );
+
+    this.geoDataService.selectedLocation$.subscribe(
+      this.flyToSelectedLocation.bind(this)
+    );
   }
 
   private handleCitiesInfo(citiesInfo: Array<CityInfo>): void {
-    this.citiesInfo = citiesInfo ?? [];
+    if (!citiesInfo.length) { return; }
+    this.map.invalidateSize();
+
+    this.citiesInfo = citiesInfo;
     this.prepareCitiesInfo();
 
     if (this.heatMapLayer) { this.map.removeLayer(this.heatMapLayer); }
@@ -146,7 +151,7 @@ export class WorldMapComponent implements OnInit {
 
   private prepareCitiesInfo(): void {
     this.citiesInfo.forEach(p => {
-      if (!p.population) { return; }
+      if (!p.population || p.feature_code === 'PPLX') { return; }
 
       this.points.push([...p.coordinates, p.population * .002]);
 
@@ -179,9 +184,7 @@ export class WorldMapComponent implements OnInit {
         });
       }
 
-      const icon = p.feature_code !== 'PPLX' ?
-        new DivIcon({ html: `<b>${p.population.toLocaleString('ru')}</b>` }) :
-        new DivIcon();
+      const icon = new DivIcon({ html: `<b>${p.population.toLocaleString('ru')}</b>` });
       const marker = new PopulationMarker(
         // @ts-ignore
         p.coordinates,
@@ -234,5 +237,12 @@ export class WorldMapComponent implements OnInit {
     const html = `<b>${clusterPopulation.toLocaleString('ru')}</b>`;
 
     return new DivIcon(clusterPopulation ? { html } : undefined);
+  }
+
+  private flyToSelectedLocation(
+    location: LatLng = this.defaultLocation,
+    zoomLevel: number = this.initialZoomLevel
+  ): void {
+    this.map.flyTo(location, zoomLevel);
   }
 }

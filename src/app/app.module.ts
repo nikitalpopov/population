@@ -7,12 +7,14 @@ import { LeafletModule } from '@asymmetrik/ngx-leaflet';
 
 import { AppComponent } from '@app/app.component';
 import { MaterialModule } from '@app/material.module';
+import { HeaderComponent } from '@components/header/header.component';
 import { WorldMapComponent } from '@components/world-map/world-map.component';
 
 @NgModule({
   declarations: [
     AppComponent,
-    WorldMapComponent
+    WorldMapComponent,
+    HeaderComponent
   ],
   imports: [
     BrowserModule,

@@ -6,7 +6,7 @@
     "prestart": "ng build --prod --build-optimizer",
     "start": "nodemon babel-node index.js",
     "serve": "ng serve",
-    "build": "ng build --prod --build-optimizer --watch",
+    "build": "ng build --prod --build-optimizer",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",

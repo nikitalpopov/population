@@ -1,6 +1,7 @@
 div.container {
+  display: grid;
+  grid-template-rows: max-content;
   width: 100vw;
   height: 100vh;
-  display: grid;
   margin: 0;
 }

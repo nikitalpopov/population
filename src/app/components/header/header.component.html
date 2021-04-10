@@ -1,0 +1,16 @@
+<header>
+  <mat-toolbar>
+    <strong>🌍 World population heatmap</strong>
+
+    <form id="search-city-form">
+      <mat-form-field>
+        <input type="text" placeholder="enter city" matInput [formControl]="searchControl" [matAutocomplete]="auto">
+        <mat-autocomplete #auto="matAutocomplete">
+          <mat-option *ngFor="let option of filteredOptions | async" [value]="option.name" (click)="onCitySelection(option.value)">
+            {{option.label}}
+          </mat-option>
+        </mat-autocomplete>
+      </mat-form-field>
+    </form>
+  </mat-toolbar>
+</header>

@@ -1,0 +1,24 @@
+:host {
+  display: flex;
+}
+
+header {
+  display: flex;
+  align-items: center;
+  width: 100%;
+
+  mat-toolbar {
+    height: auto;
+    justify-content: space-between;
+
+    strong {
+      font-size: large;
+    }
+
+    #search-city-form {
+      mat-form-field {
+        width: 250px;
+      }
+    }
+  }
+}
