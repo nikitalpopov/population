@@ -13,6 +13,7 @@ import { CityInfo } from '@models/city-info';
 })
 export class GeoDataService {
   citiesInfo$: BehaviorSubject<Array<CityInfo>> = new BehaviorSubject([]);
+  citiesInfoLoading$: BehaviorSubject<boolean> = new BehaviorSubject(false);
   countryToContinentMapping$: Subject<StringMap> = new Subject();
   selectedLocation$: Subject<L.LatLng> = new Subject();
 
@@ -44,6 +45,8 @@ export class GeoDataService {
   }
 
   getCitiesInfo(volume?: number, step?: number): void {
+    this.citiesInfoLoading$.next(true);
+
     const len = +localStorage.getItem('citiesInfo_length');
     if (len) {
       const acc = [];
@@ -51,6 +54,7 @@ export class GeoDataService {
         acc.concat(JSON.parse(localStorage.getItem(`citiesInfo_${i}`)));
       }
       this.citiesInfo$.next(acc);
+      this.citiesInfoLoading$.next(false);
     } else {
       this.requestCitiesInfo(volume, step);
     }
@@ -98,10 +102,12 @@ export class GeoDataService {
           //   }
           // }
 
+          this.citiesInfo$.next(acc.concat(value));
           return acc.concat(value);
         }, [])
       )
       .subscribe(citiesInfo => {
+        this.citiesInfoLoading$.next(false);
         this.citiesInfo$.next(citiesInfo);
       });
   }

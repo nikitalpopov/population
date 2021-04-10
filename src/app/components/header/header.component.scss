@@ -8,16 +8,35 @@ header {
   width: 100%;
 
   mat-toolbar {
+    display: grid;
     height: auto;
-    justify-content: space-between;
+    grid-template-columns: auto 250px;
+    padding: 8px 24px;
+
+    @media screen and (max-width: 600px) {
+      & {
+        grid-template-columns: auto;
+        gap: 10px;
+      }
+    }
 
     strong {
-      font-size: large;
+      font-size: larger;
     }
 
     #search-city-form {
+      display: flex;
+      flex-direction: row;
+      justify-self: end;
+      align-items: center;
+      width: 250px;
+
       mat-form-field {
-        width: 250px;
+        flex: 1;
+      }
+
+      mat-spinner {
+        margin-left: 15px;
       }
     }
   }

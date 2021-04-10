@@ -18,14 +18,15 @@ interface CityAutoCompletion {
   styleUrls: ['./header.component.scss']
 })
 export class HeaderComponent implements OnInit {
+  globeEmoji = '🌍';
   isDataLoading = true;
 
-  searchControl = new FormControl({ value: '', disabled: this.isDataLoading });
+  searchControl = new FormControl({ value: '', disabled: !this.isDataLoading });
 
   filteredOptions: Subject<Array<CityAutoCompletion>> = new Subject();
   options: Array<CityAutoCompletion>;
 
-  private inputUpdated: Subject<string> = new Subject();
+  private inputUpdated$: Subject<string> = new Subject();
 
   constructor(
     private geoDataService: GeoDataService
@@ -33,9 +34,6 @@ export class HeaderComponent implements OnInit {
 
   ngOnInit(): void {
     this.geoDataService.citiesInfo$.subscribe((citiesInfo) => {
-      // eslint-disable-next-line @typescript-eslint/no-unused-expressions
-      citiesInfo.length ? this.searchControl.enable() : this.searchControl.disable();
-
       this.options = citiesInfo.map(cityInfo => ({
         value: cityInfo,
         name: `${cityInfo.city}`,
@@ -43,13 +41,19 @@ export class HeaderComponent implements OnInit {
       }));
     });
 
+    this.geoDataService.citiesInfoLoading$.subscribe(isDataLoading => {
+      this.isDataLoading = isDataLoading;
+      // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+      isDataLoading ? this.searchControl.disable() : this.searchControl.enable();
+    });
+
     this.searchControl.valueChanges
       .pipe(startWith(''))
       .subscribe(inputString => {
-        this.inputUpdated.next(inputString);
+        this.inputUpdated$.next(inputString);
       });
 
-    this.inputUpdated.asObservable().pipe(
+    this.inputUpdated$.asObservable().pipe(
       debounceTime(1000),
       distinctUntilChanged()
     ).subscribe(inputString => {
@@ -62,5 +66,16 @@ export class HeaderComponent implements OnInit {
 
   onCitySelection(cityInfo: CityInfo): void {
     this.geoDataService.selectCity(cityInfo);
+
+    switch (true) {
+      case cityInfo.coordinates[1] < -30:
+        this.globeEmoji = '🌎';
+        break;
+      case cityInfo.coordinates[1] > 60:
+        this.globeEmoji = '🌏';
+        break;
+      default:
+        this.globeEmoji = '🌍';
+    }
   }
 }

@@ -32,7 +32,7 @@ export class WorldMapComponent implements OnInit {
 
   isDataLoading = true;
   numberOfPoints = 100000;
-  points: Array<number[]> = [];
+  points: Array<number[]>;
 
   private map: Map;
   private heatMapLayer: Layer;
@@ -45,9 +45,9 @@ export class WorldMapComponent implements OnInit {
 
   private citiesInfo: Array<CityInfo>;
 
-  private states: MapLike<L.MarkerClusterGroup> = {};
-  private countries: MapLike<L.MarkerClusterGroup> = {};
-  private continents: MapLike<L.MarkerClusterGroup> = {};
+  private states: MapLike<L.MarkerClusterGroup>;
+  private countries: MapLike<L.MarkerClusterGroup>;
+  private continents: MapLike<L.MarkerClusterGroup>;
 
   private statesCluster = new L.FeatureGroup();
   private countriesCluster = new L.FeatureGroup();
@@ -65,6 +65,8 @@ export class WorldMapComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    this.init();
+
     // OpenStreetMaps tiles
     let tilesUrl = `https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png`;
 
@@ -91,6 +93,22 @@ export class WorldMapComponent implements OnInit {
     );
 
     this.geoDataService.getCountryToContinentMapping();
+  }
+
+  init(): void {
+    this.points = [];
+
+    this.states = {};
+    this.countries = {};
+    this.continents = {};
+
+    this.statesCluster.clearLayers();
+    this.countriesCluster.clearLayers();
+    this.continentsCluster.clearLayers();
+
+    if (this.heatMapLayer) {
+      this.map.removeLayer(this.heatMapLayer);
+    }
   }
 
   onMouseMove(event: LeafletMouseEvent): void {
@@ -134,13 +152,16 @@ export class WorldMapComponent implements OnInit {
   }
 
   private handleCitiesInfo(citiesInfo: Array<CityInfo>): void {
-    if (!citiesInfo.length) { return; }
+    if (!citiesInfo.length) {
+      return;
+    } else {
+      this.init();
+    }
+
     this.map.invalidateSize();
 
     this.citiesInfo = citiesInfo;
     this.prepareCitiesInfo();
-
-    if (this.heatMapLayer) { this.map.removeLayer(this.heatMapLayer); }
 
     // @ts-ignore
     this.heatMapLayer = L.heatLayer(this.points, { radius: 10 });
@@ -208,23 +229,25 @@ export class WorldMapComponent implements OnInit {
 
     switch (true) {
       case zoomLevel < this.countriesZoomLevel:
-        Object.values(this.continents).forEach(i => this.addMarkersToContainer(i, this.continentsCluster));
+        this.addMarkersToContainer(this.continents, this.continentsCluster);
         break;
 
       case zoomLevel < this.regionsZoomLevel:
-        Object.values(this.countries).forEach(i => this.addMarkersToContainer(i, this.countriesCluster));
+        this.addMarkersToContainer(this.countries, this.countriesCluster);
         break;
 
       default:
-        Object.values(this.states).forEach(i => this.addMarkersToContainer(i, this.statesCluster));
+        this.addMarkersToContainer(this.states, this.statesCluster);
         break;
     }
   }
 
-  private addMarkersToContainer(marker: L.MarkerClusterGroup, container: L.FeatureGroup): void {
-    if (this.map.getBounds().intersects(marker.getBounds())) {
-      container.addLayer(marker);
-    }
+  private addMarkersToContainer(markerClusters: MapLike<L.MarkerClusterGroup>, container: L.FeatureGroup): void {
+    Object.values(markerClusters).forEach(marker => {
+      if (this.map.getBounds().intersects(marker.getBounds())) {
+        container.addLayer(marker);
+      }
+    });
   }
 
   private renderClusterIcon(cluster: any): DivIcon {

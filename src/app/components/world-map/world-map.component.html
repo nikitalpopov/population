@@ -5,11 +5,6 @@
   (leafletMapZoomEnd)="onMapZoomEnd($event)"
   (leafletMouseMove)="onMouseMove($event)">
 </div>
-<div *ngIf="isDataLoading" id="loading-progress" class="map-overlay">
-  <progress></progress>
-  <!-- <mat-progress-bar mode="indeterminate"></mat-progress-bar> -->
-  <div>data is loading...</div>
-</div>
 <div id="legend" class="map-overlay">
   <div>Lat: {{defaultLocation.lat | number}}</div>
   <div>Lng: {{defaultLocation.lng | number}}</div>

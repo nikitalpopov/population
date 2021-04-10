@@ -8,6 +8,8 @@ import { CdkTableModule } from '@angular/cdk/table';
 import { CdkTreeModule } from '@angular/cdk/tree';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatInputModule } from '@angular/material/input';
+import { MatProgressBarModule } from '@angular/material/progress-bar';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
 import { MatToolbarModule } from '@angular/material/toolbar';
 
@@ -22,8 +24,10 @@ import { MatToolbarModule } from '@angular/material/toolbar';
     ScrollingModule,
     MatAutocompleteModule,
     MatInputModule,
+    MatProgressBarModule,
+    MatProgressSpinnerModule,
     MatSelectModule,
-    MatToolbarModule
+    MatToolbarModule,
   ]
 })
 export class MaterialModule { }
