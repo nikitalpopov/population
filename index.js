@@ -17,6 +17,10 @@ server.use(cors());
 
 server.use(middlewares);
 server.use(router);
+server.use((req, res, next) => {
+  res.header("Cache-Control", "public, max-age=86400000");
+  next();
+});
 server.get('/', (req, res) => {
   res.sendFile(path.join(`${__dirname}/${distPath}/index.html`));
 });
