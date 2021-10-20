@@ -2,7 +2,7 @@
 
 World population heat map
 
-- Data was retrieved from this [dataset](https://public.opendatasoft.com/explore/dataset/geonames-all-cities-with-a-population-1000/information/)
+- Data was retrieved from this [dataset](https://simplemaps.com/data/world-cities), bigger dataset is optional (check [`index.js`](https://github.com/nikitalpopov/population/blob/master/index.js#L6))
 - Hosted on [Heroku](https://heroku.com/) with [json-server](https://github.com/typicode/json-server/)
 
 ## Demo

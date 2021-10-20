@@ -3,7 +3,7 @@
 
 # rename file to data.json
 
-# launch this sctipt:
+# launch this script:
 # $ python3 main.py
 
 import json
