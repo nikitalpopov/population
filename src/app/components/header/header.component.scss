@@ -11,7 +11,7 @@ header {
     display: grid;
     height: auto;
     grid-template-columns: auto 250px;
-    padding: 8px 24px;
+    padding: 8px 40px;
 
     @media screen and (max-width: 600px) {
       & {
@@ -20,8 +20,9 @@ header {
       }
     }
 
-    strong {
-      font-size: larger;
+    span {
+      font-size: xx-large;
+      font-weight: 300;
     }
 
     #search-city-form {
