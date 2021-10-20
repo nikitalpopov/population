@@ -14,17 +14,13 @@ df = pd.read_csv('worldcities.csv')
 # Create a multiline json
 data = json.loads(df.to_json(orient = "records"))
 
-print(data[:2])
-
 output = [{
     'city': line['city'],
     'coordinates': [line['lat'], line['lng']],
     # 'feature_code': line['feature_code'],
     'country': line['iso2'],
     'population': line['population'],
-} for line in data]
-
-print(output[:2])
+} for line in data if line['population'] != None]
 
 continent = {}
 with open('continent.json') as continent_file:

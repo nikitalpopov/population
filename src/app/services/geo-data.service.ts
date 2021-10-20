@@ -77,7 +77,7 @@ export class GeoDataService {
     this.selectedLocation$.next(location);
   }
 
-  private requestCitiesInfo(volume: number = 100000, step: number = 20000): void {
+  private requestCitiesInfo(volume: number = 60000, step: number = 20000): void {
     localStorage.setItem(`citiesInfo_length`, '0');
     // let saveToLocalStorage = true;
 
